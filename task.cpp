@@ -1,61 +1,59 @@
-#include <iostream>
-#include <vector>
-#include <queue>
+    #include <iostream>
+    #include <vector>
+    #include <queue>
+    #include <fstream>
 
-using namespace std;
+    void BFS(const std::vector<std::vector<int> > &graph, int start, std::vector<int> &distance) {
+        int n = graph.size();
+        std::queue<int> q;
+        std::vector<bool> visited(n, false);
 
-struct Node {
-    int x, y;
-    vector<pair<int, int>> path;
-};
+        q.push(start);
+        visited[start] = true;
+        distance[start] = 0;
 
-vector<pair<int, int>> Solve(const vector<vector<int>>& lab, pair<int, int> start, pair<int, int> end) { // bfs
-    int n = lab.size();
-    int m = lab[0].size();
-    vector<vector<bool>> visited(n, vector<bool>(m, false));
-    queue<Node> q;
+        while (!q.empty()) {
+            int v = q.front();
+            q.pop();
 
-    vector<pair<int, int>> direct = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-
-    q.push({start.first, start.second, {start}});
-    visited[start.first][start.second] = true;
-
-    while (!q.empty()) {
-        Node curr = q.front();
-        q.pop();
-
-        if (curr.x == end.first && curr.y == end.second) return curr.path;
-
-        for (int i = 0; i < direct.size(); i++) {
-            int nx = curr.x + direct[i].first;
-            int ny = curr.y + direct[i].second;
-            if (nx >= 0 && nx < n && ny >= 0 && ny < m && !visited[nx][ny] && lab[nx][ny] != 0) {
-                vector<pair<int, int>> new_path = curr.path;
-                new_path.emplace_back(nx, ny);
-                q.push({nx, ny, new_path});
-                visited[nx][ny] = true;
+            for (int neighbor : graph[v]) {
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    distance[neighbor] = distance[v] + 1;
+                    q.push(neighbor);
+                }
             }
         }
     }
 
-    cout << "Путь не найден";
-    return {};
-}
+    int main() {    
+        std::ifstream file("graph.txt");
+        if (!file) {
+            std::cerr << "Error" << std::endl;
+            return 0;
+        }
 
-int main() {
-    int n = 0, m = 0, start_x = 0, start_y = 0, end_x = 0, end_y = 0;
-    cin >> n >> m;
-    vector<vector<int>> lab(n, vector<int>(m));
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < m; j++) cin >> lab[i][j];
+        int ver = 0, edges = 0;
+        file >> ver >> edges;
+        std::vector<std::vector<int> > graph(ver);
+
+        for(int i = 0; i < edges; ++i) {
+            int u = 0, v = 0;
+            file >> u >> v;
+            graph[u].push_back(v);
+            graph[v].push_back(u);
+        }
+
+        int start = 0;
+        file >> start;
+        file.close();
+        std::vector<int> distance(ver, -1);
+
+        BFS(graph, start, distance);
+
+        for(int i = 0; i < ver; ++i) {
+            std::cout << distance[i] << std::endl;
+        }
+
+        return 0;
     }
-    cin >> start_x >> start_y >> end_x >> end_y;
-
-    vector<pair<int, int>> path = Solve(lab, {start_x, start_y}, {end_x, end_y});
-
-    if (!path.empty()) {
-        for (const auto& p : path) cout << p.first << ' ' << p.second << '\n';
-    }
-
-    return 0;
-}
